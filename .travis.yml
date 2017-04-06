@@ -1,0 +1,63 @@
+language: perl
+sudo: false
+dist: trusty
+cache:
+  ccache: true
+addons:
+  apt:
+    packages:
+      - cmake
+
+perl:
+  #- "5.10"
+  #- "5.12"
+  #- "5.14"
+  #- "5.16"
+  #- "5.18"
+  #- "5.20-thr"
+  #- "5.22-thr"
+  #- "5.24"
+  - "5.24-thr"
+  #- "blead"
+
+# not run tag pushes
+branches:
+  except:
+  - /^v?[0-9]+\.[0-9]+/
+
+before_install:
+  - mkdir $HOME/bin || true
+  - ln -s `which true` $HOME/bin/cpansign
+  - git clone --depth=1 git://github.com/01org/hyperscan
+  - cd hyperscan
+  - CXX="ccache g++" CC="ccache gcc" cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=$HOME/amd64 .
+  - make -s -j4
+  - make install
+  - cd ..
+  - eval $(curl https://travis-perl.github.io/init) --perl
+
+script:
+  - perl Makefile.PL PREFIX=$HOME/amd64 && make test
+
+install:
+  - export AUTOMATED_TESTING=1 HARNESS_TIMER=1 AUTHOR_TESTING=0 RELEASE_TESTING=0
+  - cpan-install --deps       # installs prereqs, including recommends
+  - cpan-install --coverage   # installs converage prereqs, if enabled
+
+before_script:
+  - coverage-setup
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+
+matrix:
+  fast_finish: true
+  include:
+    - perl: "5.24"
+      env: COVERAGE=1 AUTHOR_TESTING=1  # enables coverage+coveralls reporting
+  allow_failures:
+    - env: COVERAGE=1 AUTHOR_TESTING=1
+    - perl: "blead"
+
