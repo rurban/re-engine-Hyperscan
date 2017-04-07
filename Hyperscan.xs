@@ -50,8 +50,8 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
         return Perl_re_compile(pattern, flags);
     }
 
-    wrapped = sv_2mortal(newSVpvn("(?", 2));
-    wrapped_unset = sv_2mortal(newSVpvn("", 0));
+    wrapped = newSVpvn_flags("(?", 2, SVs_TEMP);
+    wrapped_unset = newSVpvn_flags("", 0, SVs_TEMP);
 
     /* C<split " ">, bypass the Hyperscan engine alltogether and act as perl does */
     if (flags & RXf_SPLIT && plen == 1 && exp[0] == ' ')
@@ -133,7 +133,6 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
                        "Hyperscan compilation failed with %d: %s\n",
                        compile_err->expression, compile_err->message);
         hs_free_compile_error(compile_err);
-        sv_2mortal(wrapped);
         return Perl_re_compile(pattern, flags);
     }
 

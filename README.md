@@ -19,8 +19,8 @@ Hyperscan regular expressions provided by -lhs.
 
 This provides the fastest regular expression library on Intel-CPU's
 only, but needs to fall back to the core perl regexp compiler with
-backtracking, zero-width assertions and more advanced patterns.  It is
-typically 50% faster then the core regex engine.
+backtracking, lookbehind, zero-width assertions and more advanced
+patterns.  It is typically 50% faster then the core regex engine.
 
 # FUNCTIONS
 
