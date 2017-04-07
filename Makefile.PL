@@ -1,10 +1,10 @@
-BEGIN { require 5.010; }
+use 5.010;
 use strict;
 use warnings;
 use ExtUtils::MakeMaker 6.31;
 use Config;
-my $prefix;
 
+my $prefix;
 if (@ARGV) { # PREFIX=~
   while (my $arg = shift @ARGV) {
     if ($arg =~ /^-?-?PREFIX=(.*)/i) {
@@ -14,20 +14,38 @@ if (@ARGV) { # PREFIX=~
   }
 }
 
+eval 'use Devel::CheckLib;' and
+  check_lib_or_exit(
+    lib => 'hs',
+    header => 'hs/hs.h',
+    $prefix ? (
+      incpath => "$prefix/include",
+      libpath => "$prefix/lib"
+    ) : ());
+
 my %WriteMakefileArgs = (
-  'NAME' => 're::engine::Hyperscan',
+  'NAME'         => 're::engine::Hyperscan',
   'VERSION_FROM' => 'Hyperscan.pm',
-  'ABSTRACT' => 'Fast Hyperscan regular expression engine - Intel-only',
-  'AUTHOR' => 'Reini Urban <rurban@cpan.org>',
+  'ABSTRACT'     => 'Fast Hyperscan regular expression engine - Intel-only',
+  'AUTHOR'       => 'Reini Urban <rurban@cpan.org>',
   'BUILD_REQUIRES' => {
     'Data::Dumper' => '0',
-    'Test::More' => '0',
-    'vars' => '0'
+    'Test::More'   => '0.88',
+    ($ENV{RELEASE_TESTING}
+     ? ('Test::Kwalitee'    => 0,
+        'Class::XSAccessor' => 0,
+        'Text::CSV_XS'      => 0,
+        'List::MoreUtils'   => 0,
+        'Pod::Spell::CommonMistakes' => 0,
+        'Test::Pod'           => '1.00',
+        'Test::Pod::Coverage' => '1.04',
+        'Test::Spelling'      => 0)
+     : ()),
   },
   'CONFIGURE_REQUIRES' => {
+    'Devel::CheckLib'     => '1.00',
     'ExtUtils::MakeMaker' => '6.31'
   },
-  'DISTNAME' => 're-engine-Hyperscan',
   'dist' => {
     PREOP	=> 'pod2markdown $(VERSION_FROM) | tee README.md >$(DISTVNAME)/README.md;'
                   .' chmod -R u=rwX,go=rX . ;',
