@@ -82,6 +82,34 @@ will fall back to the core re engine:
 
 =back
 
+=head1 METHODS
+
+=over
+
+=item min_width (RX)
+
+Returns the result from hs_expression_info(). NYI
+The minimum length in bytes of a match for the pattern.
+
+=item max_width (RX)
+
+Returns the result from hs_expression_info(). NYI
+The maximum length in bytes of a match for the pattern. If the pattern
+has an unbounded maximum width, this will be set to the maximum value of
+an unsigned int (UINT_MAX).
+
+=item matches_at_eod (RX)
+
+Returns the result from hs_expression_info(). NYI
+Whether this expression can produce matches at end of data (EOD).
+
+=item matches_only_at_eod (RX)
+
+Returns the result from hs_expression_info(). NYI
+Whether this expression can *only* produce matches at end of data (EOD).
+
+=back
+
 =head1 FUNCTIONS
 
 =over

@@ -367,6 +367,62 @@ CODE:
 OUTPUT:
     RETVAL
 
+UV
+max_width(REGEXP *rx)
+PROTOTYPE: $
+CODE:
+    hs_expr_info_t *info;
+    hs_compile_error_t *error;
+    regexp * re = RegSV(rx);
+    hs_expression_info(RX_WRAPPED(rx), re->intflags, &info, &error);
+    if (error) hs_free_compile_error(error);
+    RETVAL = (UV)info->max_width;
+    free(info);
+OUTPUT:
+    RETVAL
+
+bool
+unordered_matches(REGEXP *rx)
+PROTOTYPE: $
+CODE:
+    hs_expr_info_t *info;
+    hs_compile_error_t *error;
+    regexp * re = RegSV(rx);
+    hs_expression_info(RX_WRAPPED(rx), re->intflags, &info, &error);
+    if (error) hs_free_compile_error(error);
+    RETVAL = info->unordered_matches ? &PL_sv_yes : &PL_sv_no;
+    free(info);
+OUTPUT:
+    RETVAL
+
+bool
+matches_at_eod(REGEXP *rx)
+PROTOTYPE: $
+CODE:
+    hs_expr_info_t *info;
+    hs_compile_error_t *error;
+    regexp * re = RegSV(rx);
+    hs_expression_info(RX_WRAPPED(rx), re->intflags, &info, &error);
+    if (error) hs_free_compile_error(error);
+    RETVAL = info->matches_at_eod ? &PL_sv_yes : &PL_sv_no;
+    free(info);
+OUTPUT:
+    RETVAL
+
+bool
+matches_only_at_eod(REGEXP *rx)
+PROTOTYPE: $
+CODE:
+    hs_expr_info_t *info;
+    hs_compile_error_t *error;
+    regexp * re = RegSV(rx);
+    hs_expression_info(RX_WRAPPED(rx), re->intflags, &info, &error);
+    if (error) hs_free_compile_error(error);
+    RETVAL = info->matches_only_at_eod ? &PL_sv_yes : &PL_sv_no;
+    free(info);
+OUTPUT:
+    RETVAL
+
 BOOT:
 {
     hs_populate_platform(hs_platform_info);

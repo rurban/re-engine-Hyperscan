@@ -39,6 +39,30 @@ will fall back to the core re engine:
 - Callouts and embedded code.
 - Atomic grouping and possessive quantifiers.
 
+# METHODS
+
+- min\_width (RX)
+
+    Returns the result from hs\_expression\_info(). NYI
+    The minimum length in bytes of a match for the pattern.
+
+- max\_width (RX)
+
+    Returns the result from hs\_expression\_info(). NYI
+    The maximum length in bytes of a match for the pattern. If the pattern
+    has an unbounded maximum width, this will be set to the maximum value of
+    an unsigned int (UINT\_MAX).
+
+- matches\_at\_eod (RX)
+
+    Returns the result from hs\_expression\_info(). NYI
+    Whether this expression can produce matches at end of data (EOD).
+
+- matches\_only\_at\_eod (RX)
+
+    Returns the result from hs\_expression\_info(). NYI
+    Whether this expression can \*only\* produce matches at end of data (EOD).
+
 # FUNCTIONS
 
 - ENGINE
