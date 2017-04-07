@@ -129,11 +129,12 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     );
 
     if (rc != HS_SUCCESS) {
-        croak("Hyperscan compilation failed with %d: %s\n",
-              compile_err->expression, compile_err->message);
+        Perl_ck_warner(aTHX_ packWARN(WARN_REGEXP),
+                       "Hyperscan compilation failed with %d: %s\n",
+                       compile_err->expression, compile_err->message);
         hs_free_compile_error(compile_err);
         sv_2mortal(wrapped);
-        return NULL;
+        return Perl_re_compile(pattern, flags);
     }
 
 #if PERL_VERSION >= 12
