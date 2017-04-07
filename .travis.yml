@@ -9,10 +9,6 @@ branches:
 before_install:
   - docker build -t yakkety -f .Dockerfile .
 
-install:
-  - docker run -v `pwd`:/build yakkety
-    sh -c "cpanm --installdeps --sudo ."
-
 script:
   - docker run -v `pwd`:/build yakkety
     sh -c "perl Makefile.PL && make test"
