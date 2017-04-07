@@ -41,6 +41,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     hs_compile_error_t *compile_err;
     hs_error_t rc;
 
+    hs_scratch_t *scratch = NULL;
     int nparens = 0;
 
 #ifdef RXf_PMf_EXTENDED_MORE
@@ -192,9 +193,14 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     /* Store our private object */
     re->pprivate = database;
 
-    re->paren_names = NULL;
     re->nparens = re->lastparen = re->lastcloseparen = nparens;
     /*Newxz(re->offs, nparens + 1, regexp_paren_pair);*/
+    
+    if ((rc = hs_alloc_scratch(database, &scratch)) != HS_SUCCESS) {
+        croak("Hyperscan scratch memory error %d\n", rc);
+        return 0;
+    }
+    re->paren_names = (HV*)scratch;
 
     return rx;
 }
@@ -264,14 +270,10 @@ HS_exec(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
 {
     regexp * re = RegSV(rx);
     hs_database_t *ri = re->pprivate;
+    hs_scratch_t *scratch = (hs_scratch_t *)re->paren_names;
     int rc;
     I32 i;
 
-    hs_scratch_t *scratch = NULL;
-    if ((rc = hs_alloc_scratch(ri, &scratch)) != HS_SUCCESS) {
-        croak("Hyperscan scratch memory error %d\n", rc);
-        return 0;
-    }
     rc = hs_scan(ri, stringarg,
                  strend - strbeg,      /* length */
                  stringarg - strbeg,   /* offset */
@@ -280,7 +282,6 @@ HS_exec(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
 
     /* match failed */
     if (rc != HS_SUCCESS) {
-        hs_free_scratch(scratch);
         croak("Hyperscan match error %d\n", rc);
         return 0;
     }
@@ -288,7 +289,6 @@ HS_exec(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
     re->subbeg = strbeg;
     re->sublen = strend - strbeg;
 
-    hs_free_scratch(scratch);
     return 1;
 }
 
@@ -325,6 +325,7 @@ HS_free(pTHX_ REGEXP * const rx)
 {
     regexp * re = RegSV(rx);
     hs_free_database(re->pprivate);
+    hs_free_scratch((hs_scratch_t *)(re->paren_names));
 }
 
 void *
