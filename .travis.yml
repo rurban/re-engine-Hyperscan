@@ -18,7 +18,7 @@ perl:
   #- "5.22-thr"
   #- "5.24"
   - "5.24-thr"
-  #- "blead"
+  #- "dev"
 
 # not run tag pushes
 branches:
@@ -37,15 +37,14 @@ before_install:
   - eval $(curl https://travis-perl.github.io/init) --perl
 
 script:
+  - coverage-setup
   - perl Makefile.PL PREFIX=$HOME/amd64 && make test
+  - coverage-report
 
 install:
   - export AUTOMATED_TESTING=1 HARNESS_TIMER=1 AUTHOR_TESTING=0 RELEASE_TESTING=0
   - cpan-install --deps       # installs prereqs, including recommends
   - cpan-install --coverage   # installs converage prereqs, if enabled
-
-before_script:
-  - coverage-setup
 
 notifications:
   email:
@@ -56,8 +55,8 @@ matrix:
   fast_finish: true
   include:
     - perl: "5.24"
-      env: COVERAGE=1 AUTHOR_TESTING=1  # enables coverage+coveralls reporting
+      env: COVERAGE=1 AUTHOR_TESTING=1 RELEASE_TESTING=1
   allow_failures:
-    - env: COVERAGE=1 AUTHOR_TESTING=1
-    - perl: "blead"
+    - env: COVERAGE=1 AUTHOR_TESTING=1 RELEASE_TESTING=1
+    - perl: "dev"
 
