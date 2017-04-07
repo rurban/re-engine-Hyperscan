@@ -18,8 +18,8 @@ perl:
   #- "5.18"
   #- "5.20-thr"
   #- "5.22-thr"
-  #- "5.24"
-  - "5.24-thr"
+  - "5.24"
+  #- "5.24-thr"
   #- "dev"
 
 # not run tag pushes
@@ -32,7 +32,7 @@ before_install:
   - ln -s `which true` $HOME/bin/cpansign
   - git clone --depth=1 git://github.com/01org/hyperscan
   - cd hyperscan
-  - CXX="ccache g++" CC="ccache gcc" cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=$HOME/amd64 .
+  - CXX="ccache g++" CC="ccache gcc" cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=$HOME/amd64 . || cat CMakeFiles/CMakeError.log CMakeFiles/CMakeOutput.log
   - make -s -j4
   - make install
   - cd ..
