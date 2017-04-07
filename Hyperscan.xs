@@ -17,6 +17,8 @@
 #define RegSV(p) (p)
 #endif
 
+static hs_platform_info_t *hs_platform_info = NULL;
+
 REGEXP *
 #if PERL_VERSION < 12
 HS_comp(pTHX_ const SV * const pattern, const U32 flags)
@@ -35,7 +37,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     SV  *wrapped, *wrapped_unset;
 
     /* hs_compile */
-    unsigned int options = 0;
+    unsigned int options = HS_FLAG_SOM_LEFTMOST;
     hs_database_t *database;
     hs_compile_error_t *compile_err;
     hs_error_t rc;
@@ -109,7 +111,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
       }
     }
 #endif
-    /* TODO: e r l d g c */
+    /* TODO: l d g c */
 
     /* The pattern is known to be UTF-8. Perl wouldn't turn this on unless it's
      * a valid UTF-8 sequence so tell Hyperscan not to check for that */
@@ -124,12 +126,20 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
         exp,          /* pattern */
         options,      /* options */
         HS_MODE_BLOCK,
-        NULL,
+        hs_platform_info,
         &database,
-        &compile_err
-    );
+        &compile_err);
 
     if (rc != HS_SUCCESS) {
+        /* TODO GH #1: With illegal/unsupported patterns, we might try
+           to add HS_FLAG_PREFILTER without SOM to eliminate failing
+           matches but using the faster hs, and only for true matches
+           later at scan, give over to the core re_engine.
+           https://01org.github.io/hyperscan/dev-reference/compilation.html#prefiltering-mode
+
+           Not supported are zero-width assertions, back-references or
+           conditional references.
+        */
         Perl_ck_warner(aTHX_ packWARN(WARN_REGEXP),
                        "Hyperscan compilation failed with %d: %s\n",
                        compile_err->expression, compile_err->message);
@@ -230,10 +240,11 @@ static int HS_found_cb(unsigned int id, unsigned long long from,
         re->offs = malloc(sizeof(re->offs[0]));
     else
         re->offs = realloc(re->offs, sizeof(re->offs[0]) * i);
+    /* from only avail with HS_FLAG_SOM_LEFTMOST */
     re->offs[i].start = from;
     re->offs[i].end   = to;
     re->nparens++;
-    return 0;
+    return 1;
 }
 
 I32
@@ -351,3 +362,8 @@ CODE:
     free(info);
 OUTPUT:
     RETVAL
+
+BOOT:
+{
+    hs_populate_platform(hs_platform_info);
+}
