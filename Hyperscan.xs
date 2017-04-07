@@ -92,6 +92,11 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
         exp = SvPV(tmp, plen);
         sv_catpvn(wrapped, "x", 1);
     }
+#ifdef RXf_PMf_NOCAPTURE
+    if (flags & RXf_PMf_NOCAPTURE) {
+        options &= ~HS_FLAG_SOM_LEFTMOST;
+    }
+#endif
 #ifdef RXf_PMf_CHARSET
     if (flags & RXf_PMf_CHARSET) {
       regex_charset cs;
