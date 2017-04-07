@@ -48,7 +48,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
 #endif
         )
     {
-        return Perl_re_compile(pattern, flags);
+        return Perl_re_compile(aTHX_ pattern, flags);
     }
 
     wrapped = newSVpvn_flags("(?", 2, SVs_TEMP);
@@ -134,7 +134,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
                        "Hyperscan compilation failed with %d: %s\n",
                        compile_err->expression, compile_err->message);
         hs_free_compile_error(compile_err);
-        return Perl_re_compile(pattern, flags);
+        return Perl_re_compile(aTHX_ pattern, flags);
     }
 
 #if PERL_VERSION >= 12
