@@ -36,7 +36,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     SV  *wrapped, *wrapped_unset;
 
     /* hs_compile */
-    unsigned int options = HS_FLAG_SOM_LEFTMOST|HS_FLAG_SINGLEMATCH;
+    unsigned int options = HS_FLAG_SOM_LEFTMOST;
     hs_database_t *database;
     hs_compile_error_t *compile_err;
     hs_error_t rc;
@@ -94,6 +94,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     }
 #ifdef RXf_PMf_NOCAPTURE
     if (flags & RXf_PMf_NOCAPTURE) {
+        options |= HS_FLAG_SINGLEMATCH;
         options &= ~HS_FLAG_SOM_LEFTMOST;
     }
 #endif
