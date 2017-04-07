@@ -32,7 +32,6 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
 
     STRLEN  plen;
     char    *exp = SvPV((SV*)pattern, plen);
-    char   *xend = exp + plen;
     U32 extflags = flags;
     SV  *wrapped, *wrapped_unset;
 
@@ -44,14 +43,11 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
 
     int nparens = 0;
 
-    if (flags & RXf_PMf_EXTENDED
 #ifdef RXf_PMf_EXTENDED_MORE
-        || flags & RXf_PMf_EXTENDED_MORE
-#endif
-        )
-    {
+    if (flags & RXf_PMf_EXTENDED_MORE) {
         return Perl_re_compile(aTHX_ pattern, flags);
     }
+#endif
 
     wrapped = newSVpvn_flags("(?", 2, SVs_TEMP);
     wrapped_unset = newSVpvn_flags("", 0, SVs_TEMP);
@@ -75,17 +71,25 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     /* Perl modifiers to Hyperscan flags, /s is implicit and /p isn't used
      * but they pose no problem so ignore them */
     /* qr// stringification, TODO: (?flags:pattern) */
-    if (flags & RXf_PMf_FOLD) {
-        options |= HS_FLAG_CASELESS;  /* /i */
+    if (flags & RXf_PMf_FOLD) { /* /i */
+        options |= HS_FLAG_CASELESS;
         sv_catpvn(wrapped, "i", 1);
     }
-    if (flags & RXf_PMf_SINGLELINE) {
-        options |= HS_FLAG_DOTALL;    /* /s */
+    if (flags & RXf_PMf_SINGLELINE) { /* /s */
+        options |= HS_FLAG_DOTALL;
         sv_catpvn(wrapped, "s", 1);
     }
-    if (flags & RXf_PMf_MULTILINE) {
-        options |= HS_FLAG_MULTILINE; /* /m */
+    if (flags & RXf_PMf_MULTILINE) { /* /m */
+        options |= HS_FLAG_MULTILINE;
         sv_catpvn(wrapped, "m", 1);
+    }
+    if (flags & RXf_PMf_EXTENDED) { /* /x */
+        /* prepend pattern with (?x) */
+        SV* tmp = newSVpvn_flags("(?x)", 4+plen, SVs_TEMP);
+        const char *ptmp = SvPVX_const(tmp);
+        Copy(exp, &ptmp[4], plen+1, char);
+        exp = SvPV(tmp, plen);
+        sv_catpvn(wrapped, "x", 1);
     }
 #ifdef RXf_PMf_CHARSET
     if (flags & RXf_PMf_CHARSET) {
