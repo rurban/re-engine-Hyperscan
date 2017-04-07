@@ -5,6 +5,7 @@
 
 #include <hs/hs.h>
 #include "Hyperscan.h"
+#include "regcomp.h"
 
 #ifndef strEQc
 # define strEQc(s, c) strEQ(s, ("" c ""))
@@ -185,23 +186,30 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
 }
 
 #if PERL_VERSION >= 18
+/* code blocks are extracted like this:
+  /a(?{$a=2;$b=3;($b)=$a})b/ =>
+  expr: list - const 'a' + getvars + const '(?{$a=2;$b=3;($b)=$a})' + const 'b'
+ */
 REGEXP*  HS_op_comp(pTHX_ SV ** const patternp, int pat_count,
-                       OP *expr, const struct regexp_engine* eng,
-                       REGEXP *old_re,
-                       bool *is_bare_re, U32 orig_rx_flags, U32 pm_flags)
+                    OP *expr, const struct regexp_engine* eng,
+                    REGEXP *old_re,
+                    bool *is_bare_re, U32 orig_rx_flags, U32 pm_flags)
 {
     SV *pattern = NULL;
-
-    PERL_UNUSED_ARG(pat_count);
-    PERL_UNUSED_ARG(eng);
-    PERL_UNUSED_ARG(old_re);
-    PERL_UNUSED_ARG(is_bare_re);
-    PERL_UNUSED_ARG(pm_flags);
-
     if (!patternp) {
-        for (; !expr || OP_CLASS(expr) != OA_SVOP; expr = expr->op_next) ;
-        if (expr && OP_CLASS(expr) == OA_SVOP)
-            pattern = cSVOPx_sv(expr);
+        OP *o = expr;
+        for (; !o || OP_CLASS(o) != OA_SVOP; o = o->op_next) ;
+        if (o && OP_CLASS(o) == OA_SVOP) {
+            /* having a single const op only? */
+            if (o->op_next == o || o->op_next->op_type == OP_LIST)
+                pattern = cSVOPx_sv(o);
+            else { /* no, fallback to core with codeblocks */
+                return Perl_re_op_compile
+                    (aTHX_ patternp, pat_count, expr,
+                     &PL_core_reg_engine,
+                     old_re, is_bare_re, orig_rx_flags, pm_flags);
+            }
+        }
     } else {
         pattern = *patternp;
     }
@@ -209,9 +217,22 @@ REGEXP*  HS_op_comp(pTHX_ SV ** const patternp, int pat_count,
 }
 #endif
 
-static int eventHandler(unsigned int id, unsigned long long from,
-                        unsigned long long to, unsigned int flags, void *ctx) {
-    DEBUG_r(printf("Match for pattern \"%s\" at offset %llu\n", (char *)ctx, to));
+static int HS_found_cb(unsigned int id, unsigned long long from,
+                       unsigned long long to, unsigned int flags, void *ctx) {
+    const REGEXP *rx = (const REGEXP*)ctx;
+    regexp * re = RegSV(rx);
+    hs_database_t *ri = re->pprivate;
+    int i = re->nparens;
+
+    DEBUG_r(printf("Hyperscan match %u at offset %llu until %llu\n",
+                   id, from, to));
+    if (!re->offs)
+        re->offs = malloc(sizeof(re->offs[0]));
+    else
+        re->offs = realloc(re->offs, sizeof(re->offs[0]) * i);
+    re->offs[i].start = from;
+    re->offs[i].end   = to;
+    re->nparens++;
     return 0;
 }
 
@@ -239,31 +260,19 @@ HS_exec(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
     rc = hs_scan(ri, stringarg,
                  strend - strbeg,      /* length */
                  stringarg - strbeg,   /* offset */
-                 scratch, eventHandler, NULL);
+                 scratch, HS_found_cb,
+                 rx);
 
-    /* Matching failed */
+    /* match failed */
     if (rc != HS_SUCCESS) {
         hs_free_scratch(scratch);
-        croak("Hyperscan error %d\n", rc);
+        croak("Hyperscan match error %d\n", rc);
         return 0;
     }
 
     re->subbeg = strbeg;
     re->sublen = strend - strbeg;
 
-#if 0
-    rc = hs_get_ovector_count(match_data);
-    ovector = hs_get_ovector_pointer(match_data);
-    for (i = 0; i < rc; i++) {
-        re->offs[i].start = ovector[i * 2];
-        re->offs[i].end   = ovector[i * 2 + 1];
-    }
-
-    for (i = rc; i <= re->nparens; i++) {
-        re->offs[i].start = -1;
-        re->offs[i].end   = -1;
-    }
-#endif
     hs_free_scratch(scratch);
     return 1;
 }
@@ -327,3 +336,18 @@ PROTOTYPE:
 PPCODE:
     mXPUSHs(newSViv(PTR2IV(&hs_engine)));
 
+# pattern options
+
+UV
+min_width(REGEXP *rx)
+PROTOTYPE: $
+CODE:
+    hs_expr_info_t *info;
+    hs_compile_error_t *error;
+    regexp * re = RegSV(rx);
+    hs_expression_info(RX_WRAPPED(rx), re->intflags, &info, &error);
+    if (error) hs_free_compile_error(error);
+    RETVAL = (UV)info->min_width;
+    free(info);
+OUTPUT:
+    RETVAL
