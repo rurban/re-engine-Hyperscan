@@ -1,6 +1,6 @@
 # NAME 
 
-re::engine::Hyperscan - Fast Hyperscan regular expression engine - Intel-only
+re::engine::Hyperscan - High-performance regular expression matching library (Intel only)
 
 # SYNOPSIS
 

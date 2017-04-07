@@ -24,10 +24,10 @@ eval 'use Devel::CheckLib;' and
     ) : ());
 
 my %WriteMakefileArgs = (
-  'NAME'         => 're::engine::Hyperscan',
-  'VERSION_FROM' => 'Hyperscan.pm',
-  'ABSTRACT'     => 'Fast Hyperscan regular expression engine - Intel-only',
-  'AUTHOR'       => 'Reini Urban <rurban@cpan.org>',
+  'NAME'          => 're::engine::Hyperscan',
+  'VERSION_FROM'  => 'Hyperscan.pm',
+  'ABSTRACT_FROM' => 'Hyperscan.pm',
+  'AUTHOR'        => 'Reini Urban <rurban@cpan.org>',
   'BUILD_REQUIRES' => {
     'Data::Dumper' => '0',
     'Test::More'   => '0.88',
