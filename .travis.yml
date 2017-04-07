@@ -2,21 +2,21 @@ language: perl
 sudo: required
 services:
   - docker
-# not run tag pushes
+# no tag pushes
 branches:
   except:
   - /^v?[0-9]+\.[0-9]+/
 
 before_install:
-  - docker build -t xenial -f .Dockerfile .
-
-script:
-  - docker run -v `pwd`:/build xenial
-    sh -c "perl Makefile.PL && make test"
+  - docker build -t yakkety -f .Dockerfile .
 
 install:
-  - docker run -v `pwd`:/build xenial
+  - docker run -v `pwd`:/build yakkety
     sh -c "cpanm --installdeps --sudo ."
+
+script:
+  - docker run -v `pwd`:/build yakkety
+    sh -c "perl Makefile.PL && make test"
 
 notifications:
   email:
