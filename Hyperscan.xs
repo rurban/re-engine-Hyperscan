@@ -36,7 +36,7 @@ HS_comp(pTHX_ SV * const pattern, U32 flags)
     SV  *wrapped, *wrapped_unset;
 
     /* hs_compile */
-    unsigned int options = HS_FLAG_SOM_LEFTMOST;
+    unsigned int options = HS_FLAG_SOM_LEFTMOST|HS_FLAG_SINGLEMATCH;
     hs_database_t *database;
     hs_compile_error_t *compile_err;
     hs_error_t rc;
