@@ -53,6 +53,12 @@ will fall back to the core re engine:
     has an unbounded maximum width, this will be set to the maximum value of
     an unsigned int (UINT\_MAX).
 
+- unordered\_matches (RX)
+
+    Returns the result from hs\_expression\_info(). NYI
+    Whether this expression can produce matches that are not returned in
+    order, such as those produced by assertions.
+
 - matches\_at\_eod (RX)
 
     Returns the result from hs\_expression\_info(). NYI

@@ -425,5 +425,10 @@ OUTPUT:
 
 BOOT:
 {
-    hs_populate_platform(hs_platform_info);
+    /* HS_ARCH_ERROR: Hyperscan requires SSSE3. */
+    if (hs_populate_platform(hs_platform_info) < 0) {
+        Perl_ck_warner(aTHX_ packWARN(WARN_REGEXP),
+                       "Unsupported CPU by Hyperscan (need SSSE3)");
+        return;
+    }
 }

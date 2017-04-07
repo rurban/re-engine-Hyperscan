@@ -98,6 +98,12 @@ The maximum length in bytes of a match for the pattern. If the pattern
 has an unbounded maximum width, this will be set to the maximum value of
 an unsigned int (UINT_MAX).
 
+=item unordered_matches (RX)
+
+Returns the result from hs_expression_info(). NYI
+Whether this expression can produce matches that are not returned in
+order, such as those produced by assertions.
+
 =item matches_at_eod (RX)
 
 Returns the result from hs_expression_info(). NYI
