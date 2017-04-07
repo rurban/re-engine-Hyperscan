@@ -1,3 +1,5 @@
+.Dockerfile
+.travis.yml
 Changes
 Hyperscan.h
 Hyperscan.pm
